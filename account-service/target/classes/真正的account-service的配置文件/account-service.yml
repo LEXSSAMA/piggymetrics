@@ -1,0 +1,30 @@
+#设置这个微服务的security的相关信息在访问auth-service(认证服务器)的时候需要用到
+#这个微服务是客户端模式
+security:
+  oauth2:
+    client:
+      clientId: account-service
+      clientSecret: ${ACCOUNT_SERVICE_PASSWORD}
+      accessTokenUri: http://auth-service:5000/uaa/oauth/token
+      grant-type: client_credentials
+      scope: server
+
+
+spring:
+  data:
+    mongodb:
+      host: account-mongodb
+      username: user
+      password: ${MONGODB_PASSWORD}
+      database: piggymetrics
+      port: 27017
+
+server:
+  servlet:
+    context-path: /accounts
+  port: 6000
+
+#开启熔断服务
+feign:
+  hystrix:
+    enabled: true

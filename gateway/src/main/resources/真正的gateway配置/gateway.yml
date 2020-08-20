@@ -1,0 +1,73 @@
+# 设置调用者等待命令执行的超时时间，超过这个时间，HystrixCommand被标记成TIMEOUT,并执行回退逻辑
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 20000
+
+#为什么我们要进行服务注册但是却不指定eureka.client.service-url.defaultZone这个属性呢?
+#因为registry微服务(eureka server)使用的是默认的地址和端口即(http://localhost:8761)
+#故我们不需要在其他运行在本机的微服务中特指
+
+#这里ReadTimeout和ConnectTimeout 与下面的connect-timeout-millis和socket-timeout-millis基本一致
+#详细可以看：https://stackoverflow.com/questions/3069382/what-is-the-difference-between-connection-and-read-timeout-for-sockets
+#ribbon.ReadTimeout和ribbon.ConnectTimeout用于zuul和eureka配合的时候，也就是用serviceId进行路由的时候
+ribbon:
+  ReadTimeout: 20000  #请求处理的超时时间
+  ConnectTimeout: 20000 #请求连接的超时时间
+
+#在Spring Cloud Zuul引入Spring Cloud Eureka之后，Zuul会为Eureka上面的每一个服务都默认的创建一个如下的映射，
+#而zuul.ignoredServices就要用来指定需要被忽略的默认创建映射，因为有一些服务的接口我们不希望公开
+#默认创建映射：
+#    zuul.routes.user-service.path=/user-service/**
+#    zuul.routes.user-service.servicedId=user-service
+zuul:
+  ignoredServices: '*'
+  #连接超时时间与套接字超时时间有什么不同
+  #连接超时时间:指的是在建立TCP链接过程中设置的最大等待时间
+  #套接字超时时间: 指的是建立连接后，数据传输过程中等待一个packet到达的最大时间
+  #详细可以看这个回答：https://stackoverflow.com/questions/7360520/connectiontimeout-versus-sockettimeout
+  #zuul.host.connect-time-millis和zuul.socket-timeout-millis用于zuul用url进行路由的时候
+  host:
+    connect-timeout-millis: 20000 #设置连接超时时间
+    socket-timeout-millis: 20000  #设置套接字超时时间
+
+  routes:
+    auth-service:
+        path: /uaa/**
+        url: http://auth-service:5000
+        stripPrefix: false  #表示关闭指定服务的移除代理前缀(zuul.prefix)的动作
+        #可以通过zuul.prefix可为所有的映射增加统一的前缀。如: /api。默认情况下，代理会在转发前自动剥离这个前缀。
+        #如果需要转发时带上前缀，可以配置: zuul.stripPrefix=false来关闭这个默认行为。
+        #注意： zuul.stripPrefix只会对zuul.prefix的前缀起作用。对于path指定的前缀不会起作用。
+        sensitiveHeaders:
+
+    account-service:
+        path: /accounts/**
+        serviceId: account-service
+        stripPrefix: false
+        sensitiveHeaders:
+
+    statistics-service:
+        path: /statistics/**
+        serviceId: statistics-service
+        stripPrefix: false
+        #默认情况下Zuul会过滤掉HTTP请求头信息中的一些敏感信息，防止它们被传递到下游的外部服务器
+        #敏感信息主要包括以下三个种：
+        #Cookie (Zuul默认不传递)
+        #Set-Cookie
+        #Authorization
+        #解决方法：
+        #通过设定zuul.route.<user-service>.sensitiveHeaders:为空來使敏感信息可以被传递到下游的外部服务器
+        sensitiveHeaders:
+
+    notification-service:
+        path: /notifications/**
+        serviceId: notification-service
+        stripPrefix: false
+        sensitiveHeaders:
+
+server:
+  port: 4000

@@ -1,0 +1,17 @@
+spring:
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/shared #设置了spring:profiles:active:native后通过这个配置指定具体的配置文件位置
+  profiles:
+     active: native #设置active: native,Config Server会默认从应用的src/main/resource目录下搜索配置文件
+  #spring-cloud-config-server和spring-boot-starter-security配合，给config server加密,默认的用户名是user，默认的密码的
+  #是随机生成的一串数字(也可以通过spring.security.user.password来自己指定)
+  security:
+    user:
+      password: ${CONFIG_SERVICE_PASSWORD} # ${CONFIG_SERVICE_PASSWORD}是系统的环境变量，用docker启动的时候会导入
+
+server:
+  port: 8888
+

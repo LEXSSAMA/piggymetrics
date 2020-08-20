@@ -1,0 +1,10 @@
+#与gateway的配置一样，可以看gateway的bootstrap.yml的解释
+spring:
+  application:
+    name: turbine-stream-service
+  cloud:
+    config:
+      uri: http://config:8888
+      fail-fast: true
+      password: ${CONFIG_SERVICE_PASSWORD}
+      username: user
